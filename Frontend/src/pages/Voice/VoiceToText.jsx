@@ -5,20 +5,15 @@ import styles from './VoiceToText.module.css';
 import useRecorder from '../../components/Recorder/useRecorder';
 import { Link } from 'react-router-dom';
 
-// --- Constants & Helper Functions ---
-
 const SUPPORTED_FORMATS = ['MP3', 'WAV', 'M4A', 'FLAC', 'WEBM']; 
 const MAX_FILE_SIZE_MB = 20;
 const MAX_DURATION_MIN = 1; 
 const MAX_DURATION_SEC = 60; 
 
-// --- NEW ICONS FOR CARDS ---
 const TextDocumentIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>);
 const SearchIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>);
 const EditIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>);
-// ---------------------------
 
-// --- useTranscription Hook ---
 const useTranscription = (audioFile, languageConfig, processingConfig) => {
     const [status, setStatus] = useState('IDLE');
     const [progressStep, setProgressStep] = useState(0); 
@@ -34,38 +29,36 @@ const useTranscription = (audioFile, languageConfig, processingConfig) => {
 
         setTranscript('');
         setError(null);
-        setProgressStep(0);
+        setProgressStep(1);
         setStatus('UPLOADING');
 
         try {
-            setProgressStep(1); 
-
             const formData = new FormData();
             formData.append('file', audioFile);
+
+            setStatus('ANALYZING');
+            setProgressStep(2);
 
             const res = await fetch('http://127.0.0.1:8000/transcribe', {
                 method: 'POST',
                 body: formData,
             });
 
-            setStatus('ANALYZING');
-            setProgressStep(2);
-
-            const data = await res.json();
-
             setStatus('TRANSCRIBING');
             setProgressStep(3);
 
-            if (!res.ok) {
-                throw new Error(data.error || "Transcription failed.");
+            const data = await res.json();
+
+            if (!res.ok || data.error) {
+                throw new Error(data.error || data.detail || `Server error (${res.status})`);
             }
 
             setTranscript(data.transcript || '');
-
             setStatus('COMPLETED');
             setProgressStep(4);
 
         } catch (err) {
+            console.error("Transcription error:", err);
             setStatus('FAILED');
             setError(err.message || "Unexpected error during transcription.");
         }
@@ -89,14 +82,12 @@ const useTranscription = (audioFile, languageConfig, processingConfig) => {
     };
 };
 
-// --- Main Component ---
-
 const VoiceToTextPage = () => {
     const [audioFile, setAudioFile] = useState(null);
     const [audioUrl, setAudioUrl] = useState(null); 
     const [fileDuration, setFileDuration] = useState('0:00');
     const [recordedBlob, setRecordedBlob] = useState(null); 
-    const [fileError, setFileError] = useState(null); // ADDED: Local state for file validation errors
+    const [fileError, setFileError] = useState(null);
     const [languageConfig, setLanguageConfig] = useState({
         manual: false,
         code: 'auto', 
@@ -114,16 +105,15 @@ const VoiceToTextPage = () => {
     const handleRecorderStop = useCallback((blob, time) => {
         setRecordedBlob(blob);
         const recordedFile = new File([blob], `recording.wav`, { type: 'audio/wav' });
-        
         handleFileChange(recordedFile, time); 
     }, []);
 
     const {
         recording: isRecording, 
-        time: recordingTime,
+        time: recordingTime, 
         error: micError, 
-        start: startRecording,
-        stop: stopRecording,
+        start: startRecording, 
+        stop: stopRecording, 
         cancel: cancelRecording,
     } = useRecorder(handleRecorderStop); 
 
@@ -155,7 +145,7 @@ const VoiceToTextPage = () => {
         setAudioUrl(null);
         setFileDuration('0:00');
         setRecordedBlob(null);
-        setFileError(null); // CLEARED error here
+        setFileError(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = "";
         }
@@ -168,8 +158,7 @@ const VoiceToTextPage = () => {
             const fileExtension = file.name.split('.').pop().toUpperCase();
             if (!SUPPORTED_FORMATS.some(ext => fileExtension === ext || file.type.includes(ext.toLowerCase()))) {
                 resetAndClearFile();
-                // FIXED: using setFileError instead of undefined setError
-                return setFileError(`Unsupported format: ${fileExtension}. Supported are: ${SUPPORTED_FORMATS.join(', ')}.`);
+                return setFileError(`Unsupported format: ${fileExtension}. Supported formats are: ${SUPPORTED_FORMATS.join(', ')}.`);
             }
 
             if (durationSeconds !== null) {
@@ -238,7 +227,7 @@ const VoiceToTextPage = () => {
     };
 
     const handleDownload = (format) => {
-        const content = format === 'TXT' && isComplete ? transcript : recordedBlob || transcript;
+        const content = transcript;
         const mimeType = format === 'TXT' ? 'text/plain' : 'application/msword';
         const fileExtension = format === 'DOCX' ? 'docx' : 'txt';
 
@@ -314,19 +303,18 @@ const VoiceToTextPage = () => {
                                             onDrop={handleDrop}
                                             style={{ border: '2px dashed #008b8b', borderRadius: '8px', padding: '30px', textAlign: 'center', backgroundColor: '#0a192f', marginBottom: '15px' }}
                                         >
-                                            {/* 🚨 REMOVED THE CYAN ARROW PATH FROM THIS SVG 🚨 */}
                                             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginBottom: '10px'}}>
                                                 <path d="M12 2v20M17 5v14M22 10v4M7 5v14M2 10v4"/>
                                             </svg>
                                             
                                             <p style={{ fontSize: '1.1rem', color: '#fff', marginBottom: '15px' }}>Elevate your audio. Drag & drop files.</p>
                                             
-                                            <input
-                                                type="file"
-                                                ref={fileInputRef}
-                                                onChange={(e) => handleFileChange(e.target.files[0])}
-                                                accept={SUPPORTED_FORMATS.map(f => `.${f.toLowerCase()}`).join(',')}
-                                                hidden
+                                            <input 
+                                                type="file" 
+                                                ref={fileInputRef} 
+                                                onChange={(e) => handleFileChange(e.target.files[0])} 
+                                                accept={SUPPORTED_FORMATS.map(f => `.${f.toLowerCase()}`).join(',')} 
+                                                hidden 
                                             />
                                             <button 
                                                 onClick={() => fileInputRef.current.click()} 
@@ -351,7 +339,6 @@ const VoiceToTextPage = () => {
                                 </>
                             )}
 
-                            {/* FIXED: Added fileError to UI check */}
                             {(isError || micError || fileError) && (
                                 <div className={styles['error-message']}>
                                     <p>Error: {fileError || error || micError}</p>
@@ -364,9 +351,8 @@ const VoiceToTextPage = () => {
                                 <p className={styles['note']} style={{ fontStyle: 'italic', marginTop: '5px' }}>• Current plan supports Standard Transcription Preset.</p>
                             </div>
                             
-                            {/* Primary Action Button */}
                             <div className={styles['transcribe-action-area']} style={{ marginTop: '20px' }}>
-                                <button
+                                <button 
                                     onClick={isComplete ? resetAndClearFile : startTranscription}
                                     className={`${styles['btn-primary']} ${styles['cyan-btn-large']}`}
                                     disabled={(!audioFile && !isComplete) || isProcessing}
@@ -453,10 +439,9 @@ const VoiceToTextPage = () => {
                         </section>
                     </div>
                     
-                    {/* BOTTOM ROW: Output Block */}
+                    {/* BOTTOM ROW */}
                     <div className={styles['output-row']}>
                         <section className={`${styles['output-section']} ${styles.card}`}>
-                            
                             <div className={styles['output-header']}>
                                 <h3>Transcription Output</h3>
                                 {isComplete && <span className={styles['success-badge']}>✅ Completed</span>}
@@ -497,7 +482,6 @@ const VoiceToTextPage = () => {
                         </section>
                     </div>
 
-                    {/* 🚨 NEW: 3 RELATED DESIGN CARDS 🚨 */}
                     <section className={styles.infoCardsSection}>
                         <div className={styles.infoCard}>
                             <TextDocumentIcon className={styles.infoCardIcon} />
@@ -515,7 +499,6 @@ const VoiceToTextPage = () => {
                             <p className={styles.infoCardDesc}>Review and edit your generated transcripts directly in the interface before copying or exporting to your preferred format.</p>
                         </div>
                     </section>
-                    {/* ---------------------------------- */}
 
                 </div>
             </div>

@@ -5,30 +5,20 @@ import UploadDropzone from '../../components/UploadDropzone';
 import AudioPlayer from '../../components/AudioPlayer';
 import styles from './NoiseReduction.module.css';
 
-const formatTimeWithoutMs = (seconds) => {
-    const totalSeconds = Math.floor(seconds);
-    const min = Math.floor(totalSeconds / 60);
-    const sec = totalSeconds % 60;
-    return `${min}:${sec < 10 ? '0' : ''}${sec}`;
-};
-
 const SettingsIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.466l-1.63.486a2 2 0 0 0-1.12 1.63L7 9.87l-.48 1.63a2 2 0 0 0 0 1.12l.48 1.63 1.63.486a2 2 0 0 0 1.12 1.63l.486 1.63a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.466l1.63-.486a2 2 0 0 0 1.12-1.63l.48-1.63.48 1.63a2 2 0 0 0 1.12-1.63l1.63-.486a2 2 0 0 0 2-2v-.44a2 2 0 0 0-2-2h-.466l-.486-1.63a2 2 0 0 0-1.63-1.12l-1.63-.48-.48-1.63a2 2 0 0 0-1.12-1.63l-.486-1.63a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>);
 const DownloadIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>);
 const MagicIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.5 4.5l-3 3-3-3"/><path d="M13.5 19.5l3-3 3 3"/><line x1="6" y1="21" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="3"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="12" y1="9" x2="12" y2="3"/></svg>);
 const ArrowLeft = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>);
 const RefreshIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-10.26l1.08 1.69"/></svg>);
-
-// --- NEW ICONS FOR CARDS ---
 const AiIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>);
 const WaveIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 7v10M22 10v4M7 7v10M2 10v4"/></svg>);
 const StudioIcon = (props) => (<svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>);
-// ---------------------------
 
 const PROCESS_STEPS = [
-    { key: 'detecting', label: 'Detecting noise profile', duration: 1500 },
-    { key: 'reducing', label: 'Removing background noise', duration: 3000 },
-    { key: 'enhancing', label: 'Enhancing voice clarity', duration: 1500 },
-    { key: 'finalizing', label: 'Finalizing cleaned audio', duration: 500 },
+    { key: 'detecting', label: 'Detecting noise profile' },
+    { key: 'reducing', label: 'Removing background noise' },
+    { key: 'enhancing', label: 'Enhancing voice clarity' },
+    { key: 'finalizing', label: 'Finalizing cleaned audio' },
 ];
 
 const InlineRecorder = ({ onRecordStop }) => {
@@ -55,7 +45,7 @@ const InlineRecorder = ({ onRecordStop }) => {
 
             mediaRecorder.onstop = () => {
                 const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-                audioBlob.name = "voice_recording.wav"; 
+                audioBlob.name = `recording_${Date.now()}.wav`; 
                 onRecordStop(audioBlob, recordingTime);
                 setRecordingTime(0);
                 stream.getTracks().forEach(track => track.stop());
@@ -90,7 +80,6 @@ const InlineRecorder = ({ onRecordStop }) => {
 
     return (
         <div className={styles.recorderContainer}>
-            {/* Added Recorder Heading */}
             <h3 className={styles.recorderTitle}>Record New Audio</h3>
             
             <div className={`${styles.micIconWrapper} ${isRecording ? styles.pulsing : ''}`}>
@@ -126,10 +115,19 @@ export default function NoiseReduction() {
     const [jobResult, setJobResult] = useState(null); 
     const [error, setError] = useState(null); 
     const [nrStrength, setNrStrength] = useState('Medium'); 
+    const [activeStepIndex, setActiveStepIndex] = useState(0);
+    const stepIntervalRef = useRef(null);
 
     const hasInput = useMemo(() => inputAudio !== null, [inputAudio]);
     const isProcessing = jobStatus && ['uploading', 'processing'].includes(jobStatus);
     const isReadyToStart = hasInput && jobStatus !== 'completed' && jobStatus !== 'error';
+
+    useEffect(() => {
+        return () => {
+            if (stepIntervalRef.current) clearInterval(stepIntervalRef.current);
+            if (jobResult?.originalFileUrl) URL.revokeObjectURL(jobResult.originalFileUrl);
+        };
+    }, [jobResult]);
 
     const handleAudioReady = (audioBlobOrFile, duration) => {
         if (duration > 120) {
@@ -137,72 +135,84 @@ export default function NoiseReduction() {
             return;
         }
 
-        if (audioBlobOrFile.size > 5 * 1024 * 1024) {
-            setError("File size exceeds the 5MB limit.");
+        if (audioBlobOrFile.size > 10 * 1024 * 1024) {
+            setError("File size exceeds the 10MB limit.");
             return;
         }
 
-        if (audioBlobOrFile.name) {
-            const ext = audioBlobOrFile.name.split('.').pop().toLowerCase();
-            if (ext !== 'mp3' && ext !== 'wav') {
-                setError("Only MP3 and WAV formats are supported.");
-                return;
-            }
-        } else if (audioBlobOrFile.type) {
-            if (!audioBlobOrFile.type.includes('mpeg') && !audioBlobOrFile.type.includes('wav')) {
-                setError("Only MP3 and WAV formats are supported.");
-                return;
-            }
+        const name = audioBlobOrFile.name || "";
+        const type = audioBlobOrFile.type || "";
+        const isSupported = name.endsWith('.mp3') || name.endsWith('.wav') || type.includes('mpeg') || type.includes('wav');
+
+        if (!isSupported && name) {
+            setError("Only MP3 and WAV formats are supported.");
+            return;
         }
 
         setInputAudio(audioBlobOrFile);
-        setInputDuration(duration);
+        setInputDuration(duration || 0);
         setJobStatus('idle'); 
         setJobResult(null);
         setError(null);
     };
 
     const clearInput = () => {
+        if (jobResult?.originalFileUrl) {
+            URL.revokeObjectURL(jobResult.originalFileUrl);
+        }
+        if (stepIntervalRef.current) {
+            clearInterval(stepIntervalRef.current);
+        }
         setInputAudio(null);
         setInputDuration(0);
         setJobStatus(null);
         setJobResult(null);
         setError(null);
+        setActiveStepIndex(0);
     };
 
     const startProcessing = async () => {
         setJobStatus('uploading');
         setError(null);
+        setActiveStepIndex(0);
+
+        // Advance progress step visual indicator smoothly
+        stepIntervalRef.current = setInterval(() => {
+            setActiveStepIndex(prev => (prev < PROCESS_STEPS.length - 1 ? prev + 1 : prev));
+        }, 1200);
+
         try {
             const formData = new FormData();
             formData.append("file", inputAudio);
             formData.append("strength", nrStrength);
-            formData.append("noiseStrength", nrStrength);   // ✅ ADD THIS
+
             setJobStatus('processing');
             const response = await fetch("http://127.0.0.1:8000/noise-reduction", {
                 method: "POST",
                 body: formData
             });
+
             const data = await response.json();
-            if (!response.ok) throw new Error(data.error || "Processing failed");
+            if (!response.ok || data.error) {
+                throw new Error(data.error || `Server responded with ${response.status}`);
+            }
+
+            clearInterval(stepIntervalRef.current);
+            setActiveStepIndex(PROCESS_STEPS.length);
             setJobStatus('completed');
             setJobResult({
                 originalFileUrl: URL.createObjectURL(inputAudio),
                 processedFileUrl: data.cleaned_url, 
                 duration: inputDuration,
                 strength: nrStrength,
-                fileName: "cleaned_audio.mp3"
+                fileName: `cleaned_${inputAudio.name || 'audio.mp3'}`
             });
-        } catch (err) {
-            setJobStatus('error');
-            setError(err.message);
-        }
-    };
 
-    const getActiveStepIndex = () => {
-        if (jobStatus === 'uploading') return -1; 
-        if (jobStatus === 'completed' || jobStatus === 'error') return PROCESS_STEPS.length;
-        return -1; 
+        } catch (err) {
+            clearInterval(stepIntervalRef.current);
+            setJobStatus('error');
+            setError(err.message || "Failed to process audio.");
+        }
     };
 
     const handleControlChange = (newStrength) => {
@@ -221,19 +231,22 @@ export default function NoiseReduction() {
                     {jobStatus === 'uploading' ? '🚀 Uploading Audio...' : '✨ Applying Noise Reduction...'}
                 </h3>
                 <div className={styles.progressBarOuter}>
-                    <div className={`${styles.progressBarInner} ${jobStatus === 'uploading' ? styles.progressUploading : styles.progressProcessing}`} style={{ width: jobStatus === 'uploading' ? '30%' : '75%' }}></div>
+                    <div 
+                        className={`${styles.progressBarInner} ${jobStatus === 'uploading' ? styles.progressUploading : styles.progressProcessing}`} 
+                        style={{ width: `${Math.max(20, (activeStepIndex + 1) * 25)}%` }}
+                    ></div>
                 </div>
                 <ul className={styles.stepList}>
                     {PROCESS_STEPS.map((step, index) => (
                         <li key={step.key} className={styles.stepItem}>
                             <span className={styles.stepText}>{step.label}</span>
                             <span className={styles.stepStatus}>
-                                {jobStatus === 'completed' || index < getActiveStepIndex() ? 'Done' : (index === getActiveStepIndex() ? 'In Progress' : 'Pending')}
+                                {index < activeStepIndex ? 'Done' : (index === activeStepIndex ? 'In Progress' : 'Pending')}
                             </span>
                         </li>
                     ))}
                 </ul>
-                <p className={styles.statusTip}>Estimated time: ~{jobStatus === 'uploading' ? '2 seconds' : '6 seconds'} based on file size.</p>
+                <p className={styles.statusTip}>Acoustic isolation in progress. Please do not close the window.</p>
             </div>
         );
     };
@@ -300,7 +313,7 @@ export default function NoiseReduction() {
                             <div className={styles.currentInputCard}>
                                 <h3 className={styles.cardTitle}>Input Ready: {inputAudio.name || `Recording`}</h3>
                                 <p className={styles.inputDetails}>
-                                     Strength: {nrStrength}
+                                     Strength: {nrStrength} | Duration: {Number(inputDuration).toFixed(1)}s
                                 </p>
                                 <button onClick={startProcessing} className={styles.primaryButton}>
                                     <MagicIcon className={styles.buttonIcon} /> Start Noise Reduction
@@ -326,9 +339,12 @@ export default function NoiseReduction() {
                             <div className={styles.controlGroup}>
                                 <label className={styles.controlLabel}>Reduction Strength: <span className={styles.controlValue}>{nrStrength}</span></label>
                                 <input 
-                                    type="range" min="0" max="2" value={nrStrength === 'Low' ? 0 : (nrStrength === 'Medium' ? 1 : 2)}
+                                    type="range" 
+                                    min="0" 
+                                    max="2" 
+                                    value={nrStrength === 'Low' ? 0 : (nrStrength === 'Medium' ? 1 : 2)}
                                     onChange={(e) => handleControlChange(['Low', 'Medium', 'High'][e.target.value])}
-                                    className={styles.rangeSlider} disabled={false} 
+                                    className={styles.rangeSlider} 
                                 />
                                 <div className={styles.sliderLabels}>
                                     <span>Low</span><span>Medium</span><span>High</span>
@@ -346,25 +362,23 @@ export default function NoiseReduction() {
                     </aside>
                 </div>
 
-                {/* 🚨 NEW: 3 RELATED DESIGN CARDS 🚨 */}
                 <section className={styles.infoCardsSection}>
                     <div className={styles.infoCard}>
                         <AiIcon className={styles.infoCardIcon} />
                         <h3 className={styles.infoCardTitle}>AI Noise Cancellation</h3>
-                        <p className={styles.infoCardDesc}>Advanced machine learning algorithms instantly identify and isolate human speech from unwanted background noise.</p>
+                        <p className={styles.infoCardDesc}>Advanced machine learning algorithms identify and isolate human speech from background interference.</p>
                     </div>
                     <div className={styles.infoCard}>
                         <WaveIcon className={styles.infoCardIcon} />
                         <h3 className={styles.infoCardTitle}>Preserve Vocal Tone</h3>
-                        <p className={styles.infoCardDesc}>Removes hiss, hum, and static without distorting the natural frequency and warmth of your original voice.</p>
+                        <p className={styles.infoCardDesc}>Removes hiss, hum, and static without distorting the natural frequency of your voice.</p>
                     </div>
                     <div className={styles.infoCard}>
                         <StudioIcon className={styles.infoCardIcon} />
                         <h3 className={styles.infoCardTitle}>Studio-Quality Results</h3>
-                        <p className={styles.infoCardDesc}>Transform noisy phone recordings or outdoor interviews into crisp, professional studio-quality audio in seconds.</p>
+                        <p className={styles.infoCardDesc}>Transform phone recordings or outdoor interviews into clean, professional audio.</p>
                     </div>
                 </section>
-                {/* ---------------------------------- */}
 
             </div>
         </AppShell>

@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import AppShell from '../../components/AppShell'; 
 import styles from './EmotionDetection.module.css'; 
 import axios from 'axios'; 
-// Added CartesianGrid to Recharts import for the background radar lines
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LabelList, CartesianGrid } from 'recharts';
 
 // ----------------------------------------------------------------------
@@ -25,17 +24,15 @@ const getEmotionClass = (emotion) => EMOTION_CLASS_MAP[emotion] || EMOTION_CLASS
 
 const getEmotionInsight = (emotion) => {
     const insights = {
-        Happy: "Positive tone with energetic expression indicating joy or happy.",
-        Neutral: "Balanced and steady vocal pattern indicating neutral.",
-        Angry: "High intensity and sharp vocal patterns suggest frustration or angry.",
+        Happy: "Positive tone with energetic expression indicating joy or happiness.",
+        Neutral: "Balanced and steady vocal pattern indicating neutrality.",
+        Angry: "High intensity and sharp vocal patterns suggest frustration or anger.",
         Sad: "Low energy with a softer tone indicating grief or sadness.",
         Fear: "Unstable tone indicating signs of tension or fear."
     };
     return insights[emotion] || insights['Neutral'];
 };
 
-// --- CYBERPUNK CHART HELPERS ---
-// Formatting to match the exact 1-to-5 sequential layout in the image
 const formatChartData = (scores) => {
     if (!scores) return [];
     return [
@@ -47,7 +44,6 @@ const formatChartData = (scores) => {
     ];
 };
 
-// Custom X-Axis Labels (Bottom Text)
 const CustomXAxisTick = ({ x, y, payload }) => {
     return (
         <text x={x} y={y + 15} fill="#ffffff" fontSize={14} fontWeight="700" textAnchor="middle" style={{ textShadow: '0 0 5px rgba(0, 255, 255, 0.5)' }}>
@@ -56,7 +52,6 @@ const CustomXAxisTick = ({ x, y, payload }) => {
     );
 };
 
-// Custom Bar Labels (Floating Percentages above bars)
 const CustomTopLabel = (props) => {
     const { x, y, width, value } = props;
     return (
@@ -98,11 +93,15 @@ export default function EmotionDetection() {
         formData.append("file", file);
 
         try {
+            // Do NOT manually add "Content-Type": "multipart/form-data" here; Axios handles it
             const response = await axios.post(
                 "http://127.0.0.1:8000/emotion-detection",
-                formData,
-                { headers: { "Content-Type": "multipart/form-data" } }
+                formData
             );
+
+            if (response.data.error) {
+                throw new Error(response.data.error);
+            }
 
             setResult({
                 dominant: response.data.emotion,
@@ -115,8 +114,9 @@ export default function EmotionDetection() {
             setStatus("success");
 
         } catch (err) {
-            console.error(err);
-            setError("Backend connection failed. Check server.");
+            console.error("Emotion analysis failed:", err);
+            const msg = err.response?.data?.error || err.response?.data?.detail || err.message || "Backend connection failed.";
+            setError(msg);
             setStatus("idle");
         }
     }, []);
@@ -202,7 +202,7 @@ export default function EmotionDetection() {
                     )}
 
                     <div className={styles.mainGrid}>
-                        {/* --- LEFT COLUMN: Input & Info --- */}
+                        {/* LEFT COLUMN */}
                         <div className={styles.inputColumn}>
                             <div className={styles.inputCard}>
                                 <div className={styles.cardHeader}>
@@ -240,7 +240,7 @@ export default function EmotionDetection() {
                             </div>
                         </div>
 
-                        {/* --- RIGHT COLUMN: Results --- */}
+                        {/* RIGHT COLUMN */}
                         <div className={styles.resultColumn}>
                             {status === 'success' && result ? (
                                 <div className={`${styles.resultsContainer} ${getEmotionClass(result.dominant)}`}>
@@ -255,7 +255,6 @@ export default function EmotionDetection() {
                                         </div>
                                     </div>
 
-                                    {/* HUD CYBERPUNK CHART */}
                                     <div className={styles.chartCard}>
                                         <h4 className={styles.chartTitle}>
                                              <span className={styles.chartTitleAccent}></span>EMOTION DATA ANALYSIS
@@ -266,7 +265,6 @@ export default function EmotionDetection() {
                                                     data={formatChartData(result.all_scores)} 
                                                     margin={{ top: 30, right: 10, left: 10, bottom: 20 }} 
                                                 >
-                                                    {/* SVG Glow Filter Definition */}
                                                     <defs>
                                                         <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
                                                             <feGaussianBlur stdDeviation="3" result="blur" />
@@ -278,7 +276,6 @@ export default function EmotionDetection() {
                                                         </filter>
                                                     </defs>
 
-                                                    {/* Subtle grid lines from image */}
                                                     <CartesianGrid stroke="rgba(0, 255, 255, 0.15)" vertical={false} />
                                                     
                                                     <XAxis 
@@ -297,11 +294,10 @@ export default function EmotionDetection() {
                                                         formatter={(value) => [`${value}%`, 'Confidence']}
                                                     />
                                                     
-                                                    {/* Uniform Cyan Bars with Glow */}
                                                     <Bar dataKey="value" fill="#00FFFF" radius={[2, 2, 0, 0]} barSize={45} filter="url(#neonGlow)" animationDuration={1200}>
                                                         <LabelList content={<CustomTopLabel />} />
                                                     </Bar>
-                                                </BarChart>
+                                                </BarChart> 
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
@@ -314,9 +310,6 @@ export default function EmotionDetection() {
                                             {result.insight}
                                         </p>
                                     </div>
-
-                                    
-
                                 </div>
                             ) : (
                                 <div className={styles.emptyState}>
